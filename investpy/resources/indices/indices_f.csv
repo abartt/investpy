@@ -1,0 +1,6 @@
+country,name,full_name,tag,id,symbol,currency,class,market
+india,Nifty 50,Nifty 50,india-50-futures?cid=101817,101817,NIFc1,INR,major_indices,world_indices
+singapore,SGX Nifty,SGX Nifty,india-50-futures?cid=101810,101810,SINc1,USD,major_indices,world_indices
+india,Bank NIFTY,Bank NIFTY,bank-nifty-futures,104423,NBNN0,INR,major_indices,world_indices
+united states,S&P 500,S&P 500,us-spx-500-futures,8839,US500,USD,major_indices,world_indices
+united states,S&P 500 VIX,S&P 500 VIX,us-spx-vix-futures,8884,VX,USD,major_indices,world_indices
