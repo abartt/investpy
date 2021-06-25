@@ -6,7 +6,7 @@ __version__ = '1.0.7'
 
 from .stocks import get_stocks, get_stocks_list, get_stocks_dict, get_stock_countries, get_stock_recent_data, \
     get_stock_historical_data, get_stock_company_profile, get_stock_dividends, get_stock_information, get_stocks_overview, \
-    get_stock_financial_summary, search_stocks
+    get_stock_financial_summary, search_stocks, get_stock_ratios
 
 from .funds import get_funds, get_funds_list, get_funds_dict, get_fund_countries, get_fund_recent_data, \
     get_fund_historical_data, get_fund_information, get_funds_overview, search_funds

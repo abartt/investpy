@@ -1146,6 +1146,173 @@ def get_stock_information(stock, country, as_json=False):
         return result
 
 
+def get_stock_ratios(stock, country, as_json=False):
+    """
+    This function retrieves financial ratios from the specified stock. 
+
+    Args:
+        stock (:obj:`str`): symbol of the stock to retrieve its ratios from.
+        country (:obj:`country`): name of the country from where the stock is from.
+        as_json (:obj:`bool`, optional):
+            optional argument to determine the format of the output data (:obj:`dict` or :obj:`json`).
+
+    Returns:
+        :obj:`pandas.DataFrame` or :obj:`dict`- stock_ratios:
+            The resulting :obj:`pandas.DataFrame` contains the ratios fields retrieved from Investing.com
+            from the specified stock ; it can also be returned as a :obj:`dict`, if argument `as_json=True`.
+
+            If any of the ratio fields could not be retrieved, that field/s will be filled with
+            None values. If the retrieval process succeeded, the resulting :obj:`dict` will look like::
+
+                stock_ratios = {
+                    "Stock Symbol": "BBVA",
+                    "P/E Ratio": "None",
+                    "Price to Sales": "0.55",
+                    "Price to Cash Flow": "None",
+                    "Price to Free Cash Flow": "0.51",
+                    "Price to Book": "0.36",
+                    "Price to Tangible Book": "0.4",
+                    "Gross margin": "None",
+                    "Gross Margin": "None",
+                    "Operating margin": "0.2113",
+                    "Pretax margin": "0.2113",
+                    "Net Profit margin": "0.1506",
+                    "Revenue/Share": "4.76",
+                    "Basic EPS": "0.53",
+                    "Diluted EPS": "0.53",
+                    "Book Value/Share": "6.57",
+                    "Tangible Book Value/Share": "5.87",
+                    "Cash/Share": "12.85",
+                    "Cash Flow/Share": "0.37",
+                    "Return on Equity": "0.075",
+                    "Return on Assets": "0.006600000000000001",
+                    "Return on Investment": "None",
+                    "EPS(MRQ) vs Qtr. 1 Yr. Ago": "-0.34500000000000003",
+                    "EPS(TTM) vs TTM 1 Yr. Ago": "-1.0422",
+                    "5 Year EPS Growth": "0.05",
+                    "Sales (MRQ) vs Qtr. 1 Yr. Ago": "-0.48200000000000004",
+                    "Sales (TTM) vs TTM 1 Yr. Ago": "-0.22460000000000002",
+                    "5 Year Sales Growth": "0.0634",
+                    "5 Year Capital Spending Growth": "-0.060599999999999994",
+                    "Quick Ratio": "None",
+                    "Current Ratio": "None",
+                    "LT Debt to Equity": "1.5696",
+                    "Total Debt to Equity": "1.7337",
+                    "Asset Turnover": "None",
+                    "Inventory Turnover": "None",
+                    "Revenue/Employee": "None",
+                    "Net Income/Employee": "None",
+                    "Receivable Turnover": "None",
+                    "Dividend Yield": "0.1112",
+                    "Dividend Yield 5 Year Avg.": "0.0362",
+                    "Dividend Growth Rate": "0.1843",
+                    "Payout Ratio": "None",
+                }
+
+    Raises:
+        ValueError: raised if any of the introduced arguments is not valid or errored.
+        FileNotFoundError: raised if `stocks.csv` file was not found or errored.
+        IOError: raised if `stocks.csv` file is empty or errored.
+        RuntimeError: raised if scraping process failed while running.
+        ConnectionError: raised if the connection to Investing.com errored (did not return HTTP 200)
+
+    """
+
+    if not stock:
+        raise ValueError("ERR#0013: stock parameter is mandatory "
+                         "and must be a valid stock symbol.")
+
+    if not isinstance(stock, str):
+        raise ValueError("ERR#0027: stock argument needs to be a str.")
+
+    if country is None:
+        raise ValueError("ERR#0039: country can not be None, "
+                         "it should be a str.")
+
+    if country is not None and not isinstance(country, str):
+        raise ValueError("ERR#0025: specified country value not valid.")
+
+    if not isinstance(as_json, bool):
+        raise ValueError("ERR#0002: as_json argument can just be "
+                         "True or False, bool type.")
+
+    resource_package = 'investpy'
+    resource_path = '/'.join((('resources', 'stocks.csv')))
+    if pkg_resources.resource_exists(resource_package, resource_path):
+        cvs_filename = pkg_resources.resource_filename(resource_package,
+                                                       resource_path)
+        stocks = pd.read_csv(cvs_filename, keep_default_na=False)
+    else:
+        raise FileNotFoundError("ERR#0056: stocks file not found or errored.")
+
+    if stocks is None:
+        raise IOError("ERR#0001: stocks object not found "
+                      "or unable to retrieve.")
+
+    if unidecode(country.lower()) not in get_stock_countries():
+        raise RuntimeError("ERR#0034: country " + country.lower() +
+                           " not found, check if it is correct.")
+
+    stocks = stocks[stocks['country'] == unidecode(country.lower())]
+
+    stock = stock.strip()
+
+    if unidecode(stock.lower()) not in [
+            unidecode(value.lower()) for value in stocks['symbol'].tolist()]:
+        raise RuntimeError("ERR#0018: stock " + stock.lower() +
+                           " not found, check if it is correct.")
+
+    tag = stocks.loc[
+        (stocks['symbol'].str.lower() == stock.lower()).idxmax(), 'tag']
+    stock = stocks.loc[
+        (stocks['symbol'].str.lower() == stock.lower()).idxmax(), 'symbol']
+
+    url = 'https://www.investing.com/equities/' + str(tag) + '-ratios'
+
+    head = {
+        "User-Agent": random_user_agent(),
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "text/html",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+    }
+
+    req = requests.get(url, headers=head)
+
+    if req.status_code != 200:
+        raise ConnectionError("ERR#0015: error " + str(req.status_code) +
+                              ", try again later.")
+
+    root_ = fromstring(req.text)
+    path_ = root_.xpath(".//table[contains(@id, 'rrTable')]")
+
+    ratios_cols = ['P/E Ratio', 'Price to Sales', 'Price to Cash Flow', 'Price to Free Cash Flow', 'Price to Book', 'Price to Tangible Book', 'Gross margin', 'Gross Margin', 'Operating margin', 'Pretax margin', 'Net Profit margin', 'Revenue/Share', 'Basic EPS', 'Diluted EPS', 'Book Value/Share', 'Tangible Book Value/Share', 'Cash/Share', 'Cash Flow/Share', 'Return on Equity', 'Return on Assets', 'Return on Investment', 'EPS(MRQ) vs Qtr. 1 Yr. Ago', 'EPS(TTM) vs TTM 1 Yr. Ago', '5 Year EPS Growth', 'Sales (MRQ) vs Qtr. 1 Yr. Ago', 'Sales (TTM) vs TTM 1 Yr. Ago', '5 Year Sales Growth', '5 Year Capital Spending Growth', 'Quick Ratio', 'Current Ratio', 'LT Debt to Equity', 'Total Debt to Equity', 'Asset Turnover', 'Inventory Turnover', 'Revenue/Employee', 'Net Income/Employee', 'Receivable Turnover', 'Dividend Yield', 'Dividend Yield 5 Year Avg.', 'Dividend Growth Rate', 'Payout Ratio']
+    result = pd.DataFrame(columns=ratios_cols)
+    result.at[0, 'Stock Symbol'] = stock
+
+    if path_:
+        for element in path_:
+            for row_ in element.xpath(".//tr[contains(@class, 'child')]"):
+                cols = row_.xpath(".//td")
+                if len(cols) == 3:
+                    title_ = cols[0].xpath(".//span")[0].text.strip()
+                    if title_ in result.columns.tolist():
+                        try:
+                            result.at[0, title_] = _to_float(cols[1].text)
+                            continue
+                        except:
+                            pass
+        result.replace({'N/A': None}, inplace=True)
+
+        if as_json is True:
+            json_ = result.iloc[0].to_dict()
+            return json_
+        elif as_json is False:
+            return result
+    else:
+        raise RuntimeError("ERR#0004: data retrieval error while scraping.")
+
+
 def get_stocks_overview(country, as_json=False, n_results=100):
     """
     This function retrieves an overview containing all the real time data available for the main stocks from a country,
@@ -1523,3 +1690,15 @@ def search_stocks(by, value):
     search_result.reset_index(drop=True, inplace=True)
 
     return search_result
+
+def _to_float(string):
+    factor = {'K': 1e3, 'M': 1e6, 'B': 1e9, '%':0.01}
+    if string == "-":
+        return None
+    last = string[-1]
+    if not last.isdigit():
+        string = string[:-1]
+    value = float(string)
+    if last in factor:
+        value = value * factor[last]
+    return value
