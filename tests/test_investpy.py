@@ -212,6 +212,20 @@ def test_investpy_stocks():
 
     investpy.search_stocks(by='name', value='BBVA')
 
+    params = [
+        {
+            'stock': 'bbva',
+            'country': 'spain'
+        },
+        {
+            'stock': 'entel',
+            'country': 'chile'
+        }
+    ]
+
+    for param in params:
+        investpy.get_stock_earnings(stock=param['stock'], country=param['country'])
+
 
 def test_investpy_funds():
     """

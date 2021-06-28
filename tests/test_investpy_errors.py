@@ -645,6 +645,43 @@ def test_stocks_errors():
         except:
             pass
 
+    params = [
+        {
+            'stock': None,
+            'country': 'spain',
+        },
+        {
+            'stock': ['error'],
+            'country': 'spain',
+        },
+        {
+            'stock': 'bbva',
+            'country': None,
+        },
+        {
+            'stock': 'bbva',
+            'country': ['error'],
+        },
+        {
+            'stock': 'bbva',
+            'country': 'error',
+        },
+        {
+            'stock': 'error',
+            'country': 'spain',
+        },
+        {
+            'stock': 'ALUA',
+            'country': 'argentina',
+        },
+    ]
+
+    for param in params:
+        try:
+            investpy.get_stock_earnings(stock=param['stock'], country=param['country'])
+        except:
+            pass
+
 
 def test_funds_errors():
     """
@@ -4074,12 +4111,12 @@ def test_news_errors():
     for param in params:
         try:
             investpy.economic_calendar(time_zone=param['time_zone'],
-                                  time_filter=param['time_filter'],
-                                  countries=param['countries'],
-                                  importances=param['importances'],
-                                  categories=param['categories'],
-                                  from_date=param['from_date'],
-                                  to_date=param['to_date'])
+                                       time_filter=param['time_filter'],
+                                       countries=param['countries'],
+                                       importances=param['importances'],
+                                       categories=param['categories'],
+                                       from_date=param['from_date'],
+                                       to_date=param['to_date'])
         except:
             pass
 
