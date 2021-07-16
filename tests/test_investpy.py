@@ -402,32 +402,66 @@ def test_investpy_etfs():
 
     params = [
         {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'is_symbol': False,
             'as_json': True,
             'order': 'ascending',
         },
         {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'is_symbol': False,
             'as_json': False,
             'order': 'ascending',
         },
         {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'is_symbol': False,
             'as_json': True,
             'order': 'descending',
         },
         {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'is_symbol': False,
+            'as_json': False,
+            'order': 'descending',
+        },
+        {
+            'etf': 'bbvae',
+            'is_symbol': True,
+            'as_json': True,
+            'order': 'ascending',
+        },
+        {
+            'etf': 'bbvae',
+            'is_symbol': True,
+            'as_json': False,
+            'order': 'ascending',
+        },
+        {
+            'etf': 'bbvae',
+            'is_symbol': True,
+            'as_json': True,
+            'order': 'descending',
+        },
+        {
+            'etf': 'bbvae',
+            'is_symbol': True,
             'as_json': False,
             'order': 'descending',
         },
     ]
 
     for param in params:
-        investpy.get_etf_recent_data(etf='bbva accion dj eurostoxx 50',
+        investpy.get_etf_recent_data(etf=param['etf'],
                                      country='spain',
+                                     is_symbol=param['is_symbol'],
                                      as_json=param['as_json'],
                                      order=param['order'],
                                      interval='Daily')
 
-        investpy.get_etf_historical_data(etf='bbva accion dj eurostoxx 50',
+        investpy.get_etf_historical_data(etf=param['etf'],
                                          country='spain',
+                                         is_symbol=param['is_symbol'],
                                          from_date='01/01/2010',
                                          to_date='01/01/2019',
                                          as_json=param['as_json'],
@@ -437,18 +471,32 @@ def test_investpy_etfs():
     params = [
         {
             'etf': 'bbva accion dj eurostoxx 50',
+            'is_symbol': False,
             'country': 'spain',
             'as_json': False
         },
         {
             'etf': 'bbva accion dj eurostoxx 50',
+            'is_symbol': False,
+            'country': 'spain',
+            'as_json': True
+        },
+        {
+            'etf': 'bbvae',
+            'is_symbol': True,
+            'country': 'spain',
+            'as_json': False
+        },
+        {
+            'etf': 'bbvae',
+            'is_symbol': True,
             'country': 'spain',
             'as_json': True
         }
     ]
 
     for param in params:
-        investpy.get_etf_information(etf=param['etf'], country=param['country'], as_json=param['as_json'])
+        investpy.get_etf_information(etf=param['etf'], is_symbol=param['is_symbol'], country=param['country'], as_json=param['as_json'])
 
     params = [
         {

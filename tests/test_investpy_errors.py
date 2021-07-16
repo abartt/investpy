@@ -1163,6 +1163,7 @@ def test_etfs_errors():
         {
             'etf': None,
             'country': 'spain',
+            'is_symbol': False,
             'as_json': False,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1170,6 +1171,7 @@ def test_etfs_errors():
         {
             'etf': ['error'],
             'country': 'spain',
+            'is_symbol': False,
             'as_json': False,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1177,6 +1179,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': None,
+            'is_symbol': False,
             'as_json': False,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1184,6 +1187,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'error',
+            'is_symbol': False,
             'as_json': False,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1191,6 +1195,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'netherlands',
+            'is_symbol': False,
             'as_json': False,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1198,6 +1203,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': ['error'],
+            'is_symbol': False,
             'as_json': False,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1205,6 +1211,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'as_json': 'error',
             'order': 'ascending',
             'interval': 'Daily'
@@ -1212,6 +1219,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'as_json': True,
             'order': 'error',
             'interval': 'Daily'
@@ -1219,6 +1227,7 @@ def test_etfs_errors():
         {
             'etf': 'error',
             'country': 'spain',
+            'is_symbol': False,
             'as_json': True,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1226,6 +1235,7 @@ def test_etfs_errors():
         {
             'etf': ['error'],
             'country': 'spain',
+            'is_symbol': False,
             'as_json': True,
             'order': 'ascending',
             'interval': 'Daily'
@@ -1233,6 +1243,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'as_json': True,
             'order': 'ascending',
             'interval': None
@@ -1240,6 +1251,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'as_json': True,
             'order': 'ascending',
             'interval': ['error']
@@ -1247,9 +1259,34 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'as_json': True,
             'order': 'ascending',
             'interval': 'error'
+        },
+        {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'country': 'spain',
+            'is_symbol': True,
+            'as_json': True,
+            'order': 'ascending',
+            'interval': 'Daily'
+        },
+        {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'country': 'spain',
+            'is_symbol': 'error',
+            'as_json': True,
+            'order': 'ascending',
+            'interval': 'Daily'
+        },
+        {
+            'etf': 'bbvae',
+            'country': 'spain',
+            'is_symbol': False,
+            'as_json': True,
+            'order': 'ascending',
+            'interval': 'Daily'
         },
     ]
 
@@ -1257,6 +1294,7 @@ def test_etfs_errors():
         try:
             investpy.get_etf_recent_data(etf=param['etf'],
                                          country=param['country'],
+                                         is_symbol=param['is_symbol'],
                                          as_json=param['as_json'],
                                          order=param['order'],
                                          interval=param['interval'])
@@ -1267,6 +1305,7 @@ def test_etfs_errors():
         {
             'etf': None,
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1276,6 +1315,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'error',
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1285,6 +1325,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'netherlands',
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1294,6 +1335,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': None,
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1303,6 +1345,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': ['error'],
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1312,6 +1355,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': 'error',
@@ -1321,6 +1365,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1330,6 +1375,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': 'error',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1339,6 +1385,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2019',
             'to_date': 'error',
             'as_json': False,
@@ -1348,6 +1395,7 @@ def test_etfs_errors():
         {
             'etf': 'error',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1357,6 +1405,7 @@ def test_etfs_errors():
         {
             'etf': ['error'],
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2018',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1366,6 +1415,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/1998',
             'to_date': '01/01/2019',
             'as_json': False,
@@ -1375,6 +1425,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2019',
             'to_date': '01/01/1998',
             'as_json': False,
@@ -1384,6 +1435,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/1900',
             'to_date': '01/01/1950',
             'as_json': False,
@@ -1393,6 +1445,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2019',
             'to_date': '01/03/2019',
             'as_json': True,
@@ -1402,6 +1455,7 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2019',
             'to_date': '01/03/2019',
             'as_json': True,
@@ -1411,11 +1465,42 @@ def test_etfs_errors():
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'from_date': '01/01/2019',
             'to_date': '01/03/2019',
             'as_json': True,
             'order': 'ascending',
             'interval': 'error'
+        },
+        {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'country': 'spain',
+            'is_symbol': True,
+            'from_date': '01/01/2019',
+            'to_date': '01/03/2019',
+            'as_json': True,
+            'order': 'ascending',
+            'interval': 'Daily'
+        },
+        {
+            'etf': 'bbvae',
+            'country': 'spain',
+            'is_symbol': False,
+            'from_date': '01/01/2019',
+            'to_date': '01/03/2019',
+            'as_json': True,
+            'order': 'ascending',
+            'interval': 'Daily'
+        },
+        {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'country': 'spain',
+            'is_symbol': 'error',
+            'from_date': '01/01/2019',
+            'to_date': '01/03/2019',
+            'as_json': True,
+            'order': 'ascending',
+            'interval': 'Daily'
         },
     ]
 
@@ -1423,6 +1508,7 @@ def test_etfs_errors():
         try:
             investpy.get_etf_historical_data(etf=param['etf'],
                                              country=param['country'],
+                                             is_symbol=param['is_symbol'],
                                              from_date=param['from_date'],
                                              to_date=param['to_date'],
                                              as_json=param['as_json'],
@@ -1435,38 +1521,62 @@ def test_etfs_errors():
         {
             'etf': None,
             'country': 'spain',
+            'is_symbol': False,
             'as_json': False
         },
         {
             'etf': ['error'],
             'country': 'spain',
+            'is_symbol': False,
             'as_json': False
         },
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': None,
+            'is_symbol': False,
             'as_json': False
         },
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': ['error'],
+            'is_symbol': False,
             'as_json': False
         },
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'spain',
+            'is_symbol': False,
             'as_json': None
         },
         {
             'etf': 'bbva accion dj eurostoxx 50',
             'country': 'error',
+            'is_symbol': False,
+            'as_json': False
+        },
+        {
+            'etf': 'bbva accion dj eurostoxx 50',
+            'country': 'spain',
+            'is_symbol': True,
+            'as_json': False
+        },
+        {
+            'etf': 'bbvae',
+            'country': 'spain',
+            'is_symbol': False,
+            'as_json': False
+        },
+        {
+            'etf': 'bbvae',
+            'country': 'spain',
+            'is_symbol': 'error',
             'as_json': False
         },
     ]
 
     for param in params:
         try:
-            investpy.get_etf_information(etf=param['etf'], country=param['country'], as_json=param['as_json'])
+            investpy.get_etf_information(etf=param['etf'], country=param['country'], is_symbol=param['is_symbol'], as_json=param['as_json'])
         except:
             pass
 
