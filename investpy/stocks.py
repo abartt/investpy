@@ -1,7 +1,7 @@
 # Copyright 2018-2021 Alvaro Bartolome, alvarobartt @ GitHub
 # See LICENSE for details.
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import pytz
 
 from random import randint
@@ -20,7 +20,6 @@ from .utils.extra import random_user_agent
 from .utils.data import Data
 
 from .data.stocks_data import stocks_as_df, stocks_as_list, stocks_as_dict
-from .data.stocks_data import stock_countries_as_list
 
 
 def get_stocks(country=None):
@@ -1428,6 +1427,9 @@ def get_stock_financial_summary(stock, country, summary_type='income_statement',
     if req.status_code != 200:
         raise ConnectionError("ERR#0015: error " + str(req.status_code) + ", try again later.")
 
+    if not req.text:
+        raise RuntimeError('ERR#0139: no matching financial summary found.')
+
     root = fromstring(req.text)
     tables = root.xpath(".//div[@class='companySummaryIncomeStatement']\
         /table[contains(@class, 'companyFinancialSummaryTbl')]")
@@ -1449,7 +1451,12 @@ def get_stock_financial_summary(stock, country, summary_type='income_statement',
                 curr_row = row.text_content().strip()
                 data[curr_row] = list()
                 continue
-            data[curr_row].append(float(row.text_content().strip()))
+
+            curr_value = row.text_content().strip()
+            if curr_value:
+                data[curr_row].append(float(curr_value))
+            else:
+                data[curr_row].append('N/A')
 
     dataset = pd.DataFrame(data)
     dataset.set_index('Date', inplace=True)

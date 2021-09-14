@@ -201,6 +201,12 @@ def test_investpy_stocks():
             'country': 'united kingdom',
             'summary_type': 'cash_flow_statement',
             'period': 'annual'
+        },
+        {
+            'stock': 'blng',
+            'country': 'russia',
+            'summary_type': 'cash_flow_statement',
+            'period': 'quarterly'
         }
     ]
 
