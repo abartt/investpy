@@ -518,9 +518,10 @@ def earnings_calendar(
                         company_name = value.find('span').text.strip()
                         ticker = value.find('a').text.strip()
                     elif i == 2:
-                        eps_actual = float(value.text) if value.text != '--' else np.nan
+                        txt = value.text.replace(',', '')
+                        eps_actual = float(txt) if txt != '--' else np.nan
                     elif i == 3:
-                        txt = value.text.replace('/\xa0\xa0', '')
+                        txt = value.text.replace('/\xa0\xa0', '').replace(',', '')
                         eps_forecast = float(txt) if txt != '--' else np.nan
                     elif i == 4:
                         txt = value.text.replace(',', '')
