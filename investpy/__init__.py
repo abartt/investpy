@@ -2,7 +2,7 @@
 # See LICENSE for details.
 
 __author__ = "Alvaro Bartolome @ alvarobartt in GitHub"
-__version__ = "1.0.8"
+__version__ = "1.1.0"
 
 from .bonds import (
     get_bond_countries,

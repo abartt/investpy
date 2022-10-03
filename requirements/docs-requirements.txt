@@ -1,4 +1,4 @@
 sphinx==3.4.3
 recommonmark==0.7.1
 furo==2021.4.11b34
-investpy==1.0.8
+investpy==1.1.0

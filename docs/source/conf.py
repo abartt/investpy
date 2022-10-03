@@ -21,7 +21,7 @@ copyright = '2021, Alvaro Bartolome del Canto'
 author = 'Alvaro Bartolome del Canto'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.8'
+release = '1.1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -82,7 +82,7 @@ html_title = "investpy"
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "announcement": "<em>investpy v1.0.8 has just been released! 🔥</em>",
+    "announcement": "<em>investpy v1.1.0 has just been released! 🔥</em>",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

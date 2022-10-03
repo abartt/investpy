@@ -9,6 +9,7 @@ import pandas as pd
 import pkg_resources
 import pytz
 import requests
+from dateutil import relativedelta
 from lxml.html import fromstring
 from unidecode import unidecode
 
@@ -305,99 +306,89 @@ def get_stock_recent_data(
         (stocks["symbol"].apply(unidecode).str.lower() == stock).idxmax(), "currency"
     ]
 
-    header = symbol + " Historical Data"
+    end_date = datetime.today()
+    start_date = end_date - relativedelta.relativedelta(months=1)
 
     params = {
-        "curr_id": id_,
-        "smlID": str(randint(1000000, 99999999)),
-        "header": header,
-        "interval_sec": interval.capitalize(),
-        "sort_col": "date",
-        "sort_ord": "DESC",
-        "action": "historical_data",
+        "start-date": start_date.strftime("%Y-%m-%d"),
+        "end-date": end_date.strftime("%Y-%m-%d"),
+        "time-frame": interval.capitalize(),
+        "add-missing-rows": "false",
     }
 
-    head = {
+    headers = {
         "User-Agent": random_user_agent(),
         "X-Requested-With": "XMLHttpRequest",
-        "Accept": "text/html",
+        "Domain-Id": "www",
+        "Accept": "application/json",
         "Accept-Encoding": "gzip, deflate",
         "Connection": "keep-alive",
     }
 
-    url = "https://www.investing.com/instruments/HistoricalDataAjax"
+    url = f"https://api.investing.com/api/financialdata/historical/{id_}"
 
-    req = requests.post(url, headers=head, data=params)
+    req = requests.get(url, params=params, headers=headers)
 
     if req.status_code != 200:
         raise ConnectionError(
             "ERR#0015: error " + str(req.status_code) + ", try again later."
         )
 
-    root_ = fromstring(req.text)
-    path_ = root_.xpath(".//table[@id='curr_table']/tbody/tr")
+    data = req.json()["data"]
+
+    if not data:
+        raise ValueError("No information available!")
 
     result = list()
 
-    if path_:
-        for elements_ in path_:
-            if elements_.xpath(".//td")[0].text_content() == "No results found":
-                raise IndexError(
-                    "ERR#0007: stock information unavailable or not found."
-                )
+    for entry in data:
+        stock_date = datetime.strptime(
+            str(
+                datetime.fromtimestamp(
+                    entry["rowDateRaw"], tz=pytz.timezone("GMT")
+                ).date()
+            ),
+            "%Y-%m-%d",
+        )
 
-            info = []
+        stock_close = float(entry["last_closeRaw"])
+        stock_open = float(entry["last_openRaw"])
+        stock_high = float(entry["last_maxRaw"])
+        stock_low = float(entry["last_minRaw"])
 
-            for nested_ in elements_.xpath(".//td"):
-                info.append(nested_.get("data-real-value"))
+        stock_volume = entry["volumeRaw"]
 
-            stock_date = datetime.strptime(
-                str(
-                    datetime.fromtimestamp(int(info[0]), tz=pytz.timezone("GMT")).date()
-                ),
-                "%Y-%m-%d",
-            )
+        result.insert(
+            len(result),
+            Data(
+                stock_date,
+                stock_open,
+                stock_high,
+                stock_low,
+                stock_close,
+                stock_volume,
+                stock_currency,
+                None,
+            ),
+        )
 
-            stock_close = float(info[1].replace(",", ""))
-            stock_open = float(info[2].replace(",", ""))
-            stock_high = float(info[3].replace(",", ""))
-            stock_low = float(info[4].replace(",", ""))
+    if order in ["ascending", "asc"]:
+        result = result[::-1]
+    elif order in ["descending", "desc"]:
+        result = result
 
-            stock_volume = int(info[5])
+    if as_json is True:
+        json_ = {
+            "name": name,
+            "recent": [value.stock_as_json() for value in result],
+        }
 
-            result.insert(
-                len(result),
-                Data(
-                    stock_date,
-                    stock_open,
-                    stock_high,
-                    stock_low,
-                    stock_close,
-                    stock_volume,
-                    stock_currency,
-                    None,
-                ),
-            )
+        return json.dumps(json_, sort_keys=False)
+    elif as_json is False:
+        df = pd.DataFrame.from_records([value.stock_to_dict() for value in result])
+        df.set_index("Date", inplace=True)
 
-        if order in ["ascending", "asc"]:
-            result = result[::-1]
-        elif order in ["descending", "desc"]:
-            result = result
-
-        if as_json is True:
-            json_ = {
-                "name": name,
-                "recent": [value.stock_as_json() for value in result],
-            }
-
-            return json.dumps(json_, sort_keys=False)
-        elif as_json is False:
-            df = pd.DataFrame.from_records([value.stock_to_dict() for value in result])
-            df.set_index("Date", inplace=True)
-
-            return df
-    else:
-        raise RuntimeError("ERR#0004: data retrieval error while scraping.")
+        return df
 
 
 def get_stock_historical_data(
@@ -547,43 +538,6 @@ def get_stock_historical_data(
             " 'dd/mm/yyyy'."
         )
 
-    date_interval = {
-        "intervals": [],
-    }
-
-    flag = True
-
-    while flag is True:
-        diff = end_date.year - start_date.year
-
-        if diff > 19:
-            obj = {
-                "start": start_date.strftime("%m/%d/%Y"),
-                "end": start_date.replace(year=start_date.year + 19).strftime(
-                    "%m/%d/%Y"
-                ),
-            }
-
-            date_interval["intervals"].append(obj)
-
-            start_date = start_date.replace(year=start_date.year + 19) + timedelta(
-                days=1
-            )
-        else:
-            obj = {
-                "start": start_date.strftime("%m/%d/%Y"),
-                "end": end_date.strftime("%m/%d/%Y"),
-            }
-
-            date_interval["intervals"].append(obj)
-
-            flag = False
-
-    interval_limit = len(date_interval["intervals"])
-    interval_counter = 0
-
-    data_flag = False
-
     resource_package = "investpy"
     resource_path = "/".join((("resources", "stocks.csv")))
     if pkg_resources.resource_exists(resource_package, resource_path):
@@ -629,130 +583,86 @@ def get_stock_historical_data(
         (stocks["symbol"].apply(unidecode).str.lower() == stock).idxmax(), "currency"
     ]
 
-    final = list()
+    params = {
+        "start-date": start_date.strftime("%Y-%m-%d"),
+        "end-date": end_date.strftime("%Y-%m-%d"),
+        "time-frame": interval.capitalize(),
+        "add-missing-rows": "false",
+    }
 
-    header = symbol + " Historical Data"
+    headers = {
+        "User-Agent": random_user_agent(),
+        "X-Requested-With": "XMLHttpRequest",
+        "Domain-Id": "www",
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip, deflate",
+        "Connection": "keep-alive",
+    }
 
-    for index in range(len(date_interval["intervals"])):
-        interval_counter += 1
+    url = f"https://api.investing.com/api/financialdata/historical/{id_}"
 
-        params = {
-            "curr_id": id_,
-            "smlID": str(randint(1000000, 99999999)),
-            "header": header,
-            "st_date": date_interval["intervals"][index]["start"],
-            "end_date": date_interval["intervals"][index]["end"],
-            "interval_sec": interval.capitalize(),
-            "sort_col": "date",
-            "sort_ord": "DESC",
-            "action": "historical_data",
-        }
+    req = requests.get(url, params=params, headers=headers)
 
-        head = {
-            "User-Agent": random_user_agent(),
-            "X-Requested-With": "XMLHttpRequest",
-            "Accept": "text/html",
-            "Accept-Encoding": "gzip, deflate",
-            "Connection": "keep-alive",
-        }
+    if req.status_code != 200:
+        raise ConnectionError(
+            "ERR#0015: error " + str(req.status_code) + ", try again later."
+        )
 
-        url = "https://www.investing.com/instruments/HistoricalDataAjax"
+    data = req.json()["data"]
 
-        req = requests.post(url, headers=head, data=params)
+    if not data:
+        raise ValueError("No information available!")
 
-        if req.status_code != 200:
-            raise ConnectionError(
-                "ERR#0015: error " + str(req.status_code) + ", try again later."
-            )
+    result = list()
 
-        if not req.text:
-            continue
+    for entry in data:
+        stock_date = datetime.strptime(
+            str(
+                datetime.fromtimestamp(
+                    entry["rowDateRaw"], tz=pytz.timezone("GMT")
+                ).date()
+            ),
+            "%Y-%m-%d",
+        )
 
-        root_ = fromstring(req.text)
-        path_ = root_.xpath(".//table[@id='curr_table']/tbody/tr")
+        stock_close = float(entry["last_closeRaw"])
+        stock_open = float(entry["last_openRaw"])
+        stock_high = float(entry["last_maxRaw"])
+        stock_low = float(entry["last_minRaw"])
 
-        result = list()
+        stock_volume = entry["volumeRaw"]
 
-        if path_:
-            for elements_ in path_:
-                if elements_.xpath(".//td")[0].text_content() == "No results found":
-                    if interval_counter < interval_limit:
-                        data_flag = False
-                    else:
-                        raise IndexError(
-                            "ERR#0007: stock information unavailable or not found."
-                        )
-                else:
-                    data_flag = True
+        result.insert(
+            len(result),
+            Data(
+                stock_date,
+                stock_open,
+                stock_high,
+                stock_low,
+                stock_close,
+                stock_volume,
+                stock_currency,
+                None,
+            ),
+        )
 
-                info = []
-
-                for nested_ in elements_.xpath(".//td"):
-                    info.append(nested_.get("data-real-value"))
-
-                if data_flag is True:
-                    stock_date = datetime.strptime(
-                        str(
-                            datetime.fromtimestamp(
-                                int(info[0]), tz=pytz.timezone("GMT")
-                            ).date()
-                        ),
-                        "%Y-%m-%d",
-                    )
-
-                    stock_close = float(info[1].replace(",", ""))
-                    stock_open = float(info[2].replace(",", ""))
-                    stock_high = float(info[3].replace(",", ""))
-                    stock_low = float(info[4].replace(",", ""))
-
-                    stock_volume = int(info[5])
-
-                    result.insert(
-                        len(result),
-                        Data(
-                            stock_date,
-                            stock_open,
-                            stock_high,
-                            stock_low,
-                            stock_close,
-                            stock_volume,
-                            stock_currency,
-                            None,
-                        ),
-                    )
-
-            if data_flag is True:
-                if order in ["ascending", "asc"]:
-                    result = result[::-1]
-                elif order in ["descending", "desc"]:
-                    result = result
-
-                if as_json is True:
-                    json_list = [value.stock_as_json() for value in result]
-
-                    final.append(json_list)
-                elif as_json is False:
-                    df = pd.DataFrame.from_records(
-                        [value.stock_to_dict() for value in result]
-                    )
-                    df.set_index("Date", inplace=True)
-
-                    final.append(df)
-
-        else:
-            raise RuntimeError("ERR#0004: data retrieval error while scraping.")
-
-    if order in ["descending", "desc"]:
-        final.reverse()
+    if order in ["ascending", "asc"]:
+        result = result[::-1]
+    elif order in ["descending", "desc"]:
+        result = result
 
     if as_json is True:
         json_ = {
             "name": name,
-            "historical": [value for json_list in final for value in json_list],
+            "recent": [value.stock_as_json() for value in result],
         }
+
         return json.dumps(json_, sort_keys=False)
     elif as_json is False:
-        return pd.concat(final)
+        df = pd.DataFrame.from_records([value.stock_to_dict() for value in result])
+        df.set_index("Date", inplace=True)
+
+        return df
 
 
 def get_stock_company_profile(stock, country="spain", language="english"):
