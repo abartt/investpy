@@ -2,6 +2,8 @@
   <img src="https://raw.githubusercontent.com/alvarobartt/investpy/master/docs/source/_static/logo.png" hspace="20">
 </p>
 
+## :warning: `investpy` is not working fine currently due to some Investing.com changes in their APIs, so please use [`investiny`](https://github.com/alvarobartt/investiny) in the meantime as I'm actively updating it and adding more and more features of some temporary solutions while we fix `investpy`. Thanks!
+
 <h2 align="center">Financial Data Extraction from Investing.com with Python</h2>
 
 investpy is a Python package to retrieve data from [Investing.com](https://www.investing.com/), which provides data retrieval 
