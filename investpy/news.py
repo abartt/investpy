@@ -23,6 +23,7 @@ def economic_calendar(
     categories=None,
     from_date=None,
     to_date=None,
+    lang=None,
 ):
     """
     This function retrieves the economic calendar, which covers financial events and indicators from all over the world
@@ -139,7 +140,16 @@ def economic_calendar(
             "ERR#0114: the introduced date value must be a string unless it is None."
         )
 
-    url = "https://www.investing.com/economic-calendar/Service/getCalendarFilteredData"
+    if lang is not None and not isinstance(lang, str):
+        raise ValueError(
+            "ERR#0139: the introduced lang value must be a string unless it is None."
+        )
+
+    host = "www.investing.com"
+    if lang == "korean":
+        host = "kr.investing.com"
+
+    url = f"https://{host}/economic-calendar/Service/getCalendarFilteredData"
 
     headers = {
         "User-Agent": random_user_agent(),
@@ -178,9 +188,9 @@ def economic_calendar(
 
         end_date = datetime.strptime(to_date, "%d/%m/%Y")
 
-        if start_date >= end_date:
+        if start_date > end_date:
             raise ValueError(
-                "ERR#0032: to_date should be greater than from_date, both formatted as"
+                "ERR#0032: to_date should be equal to from_date or greater than from_date, both formatted as"
                 " 'dd/mm/yyyy'."
             )
 
