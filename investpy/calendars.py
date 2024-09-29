@@ -10,9 +10,11 @@ import pytz
 import requests
 from lxml.html import fromstring
 from unidecode import unidecode
+import numpy as np
+from bs4 import BeautifulSoup as soup
 
 from .utils import constant as cst
-from .utils.extra import random_user_agent
+from .utils.extra import random_user_agent, convert_abbreviations_to_number
 
 
 def economic_calendar(
@@ -319,3 +321,240 @@ def economic_calendar(
         data["limit_from"] += 1
 
     return pd.DataFrame(results)
+
+
+def earnings_calendar(
+        time_zone=None,
+        time_filter="time_only",
+        countries=None,
+        from_date=None,
+        to_date=None,
+):
+    """
+    This function retrieves the earnings calendar, which covers financial events and indicators from all over the world
+    updated in real-time. By default, the earnings calendar of the currrent day from you local timezone will be retrieved, but
+    note that some parameters can be specified so that the earnings calendar to retrieve can be filtered.
+    Args:
+        time_zone (:obj:`str`, optional):
+            time zone in GMT +/- hours:minutes format, which will be the reference time, if None, the local GMT time zone will be used.
+        time_filter (:obj:`str`, optional):
+            it can be `time_only` or `time_remain`, so that the calendar will display the time when the event will occurr according to
+            the time zone or the remaining time until an event occurs.
+        countries (:obj:`list` of :obj:`str`, optional):
+            list of countries from where the events of the earnings calendar will be retrieved, all contries will be taken into consideration
+            if this parameter is None.
+        from_date (:obj:`str`, optional):
+            date from when the earnings calendar will be retrieved in dd/mm/yyyy format, if None just current day's earnings calendar will be retrieved.
+        to_date (:obj:`str`, optional):
+            date until when the earnings calendar will be retrieved in dd/mm/yyyy format, if None just current day's earnings calendar will be retrieved.
+    Returns:
+        :obj:`pandas.DataFrame` - earnings_calendar:
+            The resulting :obj:`pandas.DataFrame` will contain the retrieved information from the earnings calendar with the specified parameters
+            which will include information such as: date, zone or company of the event, event's title, etc. Note that some of the retrieved fields
+            may be None since Investing.com does not provides that information.
+    Raises:
+        ValueError: raised if any of the introduced parameters is not valid or errored.
+    Examples:
+            id        date         zone  company_name  ticker  eps_actual  eps_forecast  rev_actual  rev_forecast        mkt_cap                time
+        0  323  2022-05-30    singapore     Company A       A           3             4   450000000     460000000  1000000000000  After market close
+    """
+
+    if time_zone is not None and not isinstance(time_zone, str):
+        raise ValueError(
+            "ERR#0107: the introduced time_zone must be a string unless it is None."
+        )
+
+    if time_zone is None:
+        time_zone = "GMT"
+
+        diff = datetime.strptime(
+            strftime("%d/%m/%Y %H:%M", localtime()), "%d/%m/%Y %H:%M"
+        ) - datetime.strptime(strftime("%d/%m/%Y %H:%M", gmtime()), "%d/%m/%Y %H:%M")
+
+        hour_diff = int(diff.total_seconds() / 3600)
+        min_diff = int(diff.total_seconds() % 3600) * 60
+
+        if hour_diff != 0:
+            time_zone = (
+                    "GMT "
+                    + ("+" if hour_diff > 0 else "")
+                    + str(hour_diff)
+                    + ":"
+                    + ("00" if min_diff < 30 else "30")
+            )
+    else:
+        if time_zone not in cst.TIMEZONES.keys():
+            raise ValueError(
+                "ERR#0108: the introduced time_zone does not exist, please consider"
+                " passing time_zone as None."
+            )
+
+    if not isinstance(time_filter, str):
+        raise ValueError(
+            "ERR#0109: the introduced time_filter is not valid since it must be a"
+            " string."
+        )
+
+    if time_filter not in cst.TIME_FILTERS.keys():
+        raise ValueError(
+            "ERR#0110: the introduced time_filter does not exist, available ones are:"
+            " time_remaining and time_only."
+        )
+
+    if countries is not None and not isinstance(countries, list):
+        raise ValueError(
+            "ERR#0111: the introduced countries value is not valid since it must be a"
+            " list of strings unless it is None."
+        )
+
+    if from_date is not None and not isinstance(from_date, str):
+        raise ValueError(
+            "ERR#0114: the introduced date value must be a string unless it is None."
+        )
+
+    if to_date is not None and not isinstance(to_date, str):
+        raise ValueError(
+            "ERR#0114: the introduced date value must be a string unless it is None."
+        )
+
+    url = "https://www.investing.com/earnings-calendar/Service/getCalendarFilteredData"
+
+    headers = {
+        "User-Agent": random_user_agent(),
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "text/html",
+        "Accept-Encoding": "gzip, deflate",
+        "Connection": "keep-alive",
+    }
+
+    dates = [from_date, to_date]
+
+    if any(date is None for date in dates) is True:
+        data = {
+            "timeZone": choice(cst.TIMEZONES[time_zone]),
+            "timeFilter": cst.TIME_FILTERS[time_filter],
+            "currentTab": "today",
+            "submitFilters": 1,
+            "limit_from": 0,
+        }
+    else:
+        try:
+            datetime.strptime(from_date, "%d/%m/%Y")
+        except ValueError:
+            raise ValueError(
+                "ERR#0011: incorrect from_date date format, it should be 'dd/mm/yyyy'."
+            )
+
+        start_date = datetime.strptime(from_date, "%d/%m/%Y")
+
+        try:
+            datetime.strptime(to_date, "%d/%m/%Y")
+        except ValueError:
+            raise ValueError(
+                "ERR#0012: incorrect to_date format, it should be 'dd/mm/yyyy'."
+            )
+
+        end_date = datetime.strptime(to_date, "%d/%m/%Y")
+
+        if start_date >= end_date:
+            raise ValueError(
+                "ERR#0032: to_date should be greater than from_date, both formatted as"
+                " 'dd/mm/yyyy'."
+            )
+
+        data = {
+            "dateFrom": datetime.strptime(from_date, "%d/%m/%Y").strftime("%Y-%m-%d"),
+            "dateTo": datetime.strptime(to_date, "%d/%m/%Y").strftime("%Y-%m-%d"),
+            "timeZone": choice(cst.TIMEZONES[time_zone]),
+            "timeFilter": cst.TIME_FILTERS[time_filter],
+            "currentTab": "custom",
+            "submitFilters": 1,
+            "limit_from": 0,
+        }
+
+    if countries is not None:
+        def_countries = list()
+
+        available_countries = list(cst.COUNTRY_ID_FILTERS.keys())
+
+        for country in countries:
+            country = unidecode(country.strip().lower())
+
+            if country in available_countries:
+                def_countries.append(cst.COUNTRY_ID_FILTERS[country])
+
+        if len(def_countries) > 0:
+            data["country[]"] = def_countries
+
+    id_, last_id = 0, 0
+    results = list()
+
+    while True:
+        rsp = requests.post(url, headers=headers, data=data)
+        html = rsp.json()['data']
+        soup_page = soup(html, 'lxml')
+        table = soup_page.find_all('tr')
+
+        for reversed_row in table[::-1]:
+            for value in reversed_row.find_all('td'):
+                if value.get('_p_pid') is not None:
+                    id_ = value.get('_p_pid') + value.get('_r_pid')
+                    break
+            break
+
+        if id_ == last_id:
+            break
+
+        for row in table:
+            if 'tablesorterdivider' in row.attrs:
+                td = row.find('td')
+                curr_date = datetime.strptime(td.text, '%A, %B %d, %Y')
+            else:
+                for i, value in enumerate(row.find_all('td')):
+                    if i == 0:
+                        zone = value.find('span').get('title').strip().lower()
+                    elif i == 1:
+                        id_ = value.get('_p_pid') + value.get('_r_pid')
+                        company_name = value.find('span').text.strip()
+                        ticker = value.find('a').text.strip()
+                    elif i == 2:
+                        txt = value.text.replace(',', '')
+                        eps_actual = float(txt) if txt != '--' else np.nan
+                    elif i == 3:
+                        txt = value.text.replace('/\xa0\xa0', '').replace(',', '')
+                        eps_forecast = float(txt) if txt != '--' else np.nan
+                    elif i == 4:
+                        txt = value.text.replace(',', '')
+                        rev_actual = convert_abbreviations_to_number(txt) if txt != '--' else np.nan
+                    elif i == 5:
+                        txt = value.text.replace('/\xa0\xa0', '').replace(',', '')
+                        rev_forecast = convert_abbreviations_to_number(txt) if txt != '--' else np.nan
+                    elif i == 6:
+                        txt = value.text.replace(',', '')
+                        mkt_cap = convert_abbreviations_to_number(txt) if txt else np.nan
+                    elif i == 7:
+                        txt = value.find('span').get('data-tooltip')
+                        time = txt if txt else None
+
+                results.append(
+                    {
+                        'id': id_,
+                        "date": curr_date,
+                        "zone": zone,
+                        "company_name": company_name,
+                        "ticker": ticker,
+                        "eps_actual": eps_actual,
+                        "eps_forecast": eps_forecast,
+                        "rev_actual": rev_actual,
+                        "rev_forecast": rev_forecast,
+                        "mkt_cap": mkt_cap,
+                        "time": time
+                    }
+                )
+
+        last_id = results[-1]["id"]
+
+        data["limit_from"] += 1
+
+    return pd.DataFrame(results)
+

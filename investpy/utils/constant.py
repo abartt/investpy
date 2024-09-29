@@ -1187,3 +1187,5 @@ INDEX_COUNTRIES = [
     {"country": "zimbabwe", "country_name": "zimbabwe"},
     {"country": "euro zone", "country_name": "euro zone"},
 ]
+
+MULTIPLIERS = {'K': 3, 'M': 6, 'B': 9, 'T': 12}

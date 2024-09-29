@@ -61,3 +61,15 @@ def random_user_agent():
     """
 
     return random.choice(cst.USER_AGENTS)
+
+
+def convert_abbreviations_to_number(value):
+    """Converts abbreviated numbers to float format, e.g. 3.5M -> 3500000.0"""
+    if value[-1] in cst.MULTIPLIERS:
+        return float(value[:-1]) * 10 ** cst.MULTIPLIERS[value[-1]]
+    else:
+        try:
+            return float(value)
+        except ValueError:
+            raise ValueError(f"The value '{value}' format is not supported")
+

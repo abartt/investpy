@@ -20,10 +20,10 @@ def requirements(filename):
 
 setup(
     name='investpy',
-    version='1.0.8',
+    version='1.1.0',
     packages=find_packages(),
     url='https://investpy.readthedocs.io/',
-    download_url='https://github.com/alvarobartt/investpy/archive/1.0.8.tar.gz',
+    download_url='https://github.com/alvarobartt/investpy/archive/1.1.0.tar.gz',
     license='MIT License',
     author='Alvaro Bartolome',
     author_email='alvarobdc@yahoo.com',
